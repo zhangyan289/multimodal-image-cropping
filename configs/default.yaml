@@ -1,0 +1,61 @@
+# 模型配置
+model:
+  visual_encoder: "clip_vit_b32"  # 可选: clip_vit_b32, clip_rn50, resnet50
+  pretrained: true
+  freeze_encoder: false           # 是否冻结视觉编码器
+  feature_dim: 512                # 视觉特征维度
+  text_dim: 512                   # 文本特征维度
+  fusion_type: "triple_fusion"    # 可选: triple_fusion, cross_attention, gated, concat
+                                   # triple_fusion: 三特征融合（视觉+语义+情感）
+  num_attention_heads: 8
+  roi_align_size: 7               # RoI Align 输出尺寸
+  num_fusion_layers: 2            # 融合层数
+  dropout: 0.3
+
+# 训练配置
+training:
+  batch_size: 4
+  num_epochs: 40
+  num_workers: 4
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  lr_scheduler: "cosine"          # 可选: cosine, step, plateau
+  warmup_epochs: 3
+  gradient_clip: 1.0
+  seed: 42
+
+# 损失函数配置
+loss:
+  regression_type: "smooth_l1"    # 可选: smooth_l1, mse, weighted_l1
+  regression_weight: 1.0
+  ranking_weight: 0.5
+  contrastive_weight: 0.1
+  smooth_l1_beta: 1.0
+
+# 数据配置
+data:
+  image_size: 224
+  dataset_dir: "./data/GAIC"
+  train_set: "train"
+  test_set: "test"
+  augmentation: true
+  rgb_mean: [0.48145466, 0.4578275, 0.40821073]
+  rgb_std: [0.26862954, 0.26130258, 0.27577711]
+
+# 评估配置
+evaluation:
+  eval_interval: 1               # 每 N 个 epoch 评估一次
+  save_best: true
+  metric: "srcc"                  # 用于选择最佳模型的指标
+  top_k: [4, 8]                   # 计算 top-k 准确率
+
+# 日志配置
+logging:
+  log_interval: 10                # 每 N 个 batch 打印一次
+  use_tensorboard: true
+  log_dir: "./runs"
+
+# 输出配置
+output:
+  save_dir: "./checkpoints"
+  experiment_name: "exp01"

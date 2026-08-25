@@ -1,0 +1,11 @@
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+pandas>=2.0.0
+PyYAML>=6.0
+matplotlib>=3.7.0
+tqdm>=4.65.0
+scipy>=1.10.0
+tensorboard>=2.13.0
+git+https://github.com/openai/CLIP.git
