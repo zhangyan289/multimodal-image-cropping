@@ -147,28 +147,34 @@ class CroppingNet(nn.Module):
         Args:
             images: 输入图像（图像图） [B, 3, H, W]
             rois: 候选裁剪框 [N, 5]，格式为 (batch_idx, x1, y1, x2, y2)
-            semantic_features: 内容描述特征（文字图的内容部分） [B, text_dim]
-            emotion_features: 情感描述特征（文字图的情感部分，独立特征） [B, text_dim]
+            semantic_features: 内容描述（字符串列表）或预编码特征 [B, text_dim]
+            emotion_features: 情感描述（字符串列表）或预编码特征 [B, text_dim]
         Returns:
             scores: 每个候选裁剪的质量分数 [N]
         """
         batch_size = images.shape[0]
 
         # 1. 视觉编码：处理图像图
-        if self.use_feature_map:
-            # ResNet50: 获取特征图
-            visual_global = self.visual_encoder(images)  # [B, visual_dim]
-        else:
-            # CLIP 等: 获取全局特征
-            visual_global = self.visual_encoder(images)  # [B, visual_dim]
+        visual_global = self.visual_encoder(images)  # [B, visual_dim]
 
         # 2. 文本编码：处理文字图
+        # 支持两种输入：原始文本字符串列表 或 预编码特征张量
+        device = visual_global.device
+
         # 2.1 语义编码：编码内容描述
-        semantic_encoded = self.text_encoder.semantic_encoder(semantic_features)
+        if isinstance(semantic_features, (list, tuple)) and isinstance(semantic_features[0], str):
+            semantic_encoded = self.text_encoder.encode_semantic(semantic_features)
+        else:
+            semantic_encoded = self.text_encoder.semantic_encoder(semantic_features)
+        semantic_encoded = semantic_encoded.to(device)
         semantic_proj = self.semantic_proj(semantic_encoded)  # [B, feature_dim]
         
         # 2.2 情感编码：编码情感描述（独立特征）
-        emotion_encoded = self.text_encoder.emotion_encoder(emotion_features)
+        if isinstance(emotion_features, (list, tuple)) and isinstance(emotion_features[0], str):
+            emotion_encoded = self.text_encoder.encode_emotion(emotion_features)
+        else:
+            emotion_encoded = self.text_encoder.emotion_encoder(emotion_features)
+        emotion_encoded = emotion_encoded.to(device)
         emotion_proj = self.emotion_proj(emotion_encoded)  # [B, feature_dim]
 
         # 3. 处理每个候选区域

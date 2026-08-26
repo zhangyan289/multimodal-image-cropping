@@ -213,16 +213,17 @@ class CroppingDataset(Dataset):
     def _augment(self, image, annotations):
         """简单的数据增强"""
         # 随机水平翻转
+        # 注意：此时图像已经是 CHW 格式，所以翻转宽度维度（axis=2）
         if np.random.rand() > 0.5:
-            image = image[:, :, ::-1].copy()
-            w = image.shape[2]
+            image = image[:, :, ::-1].copy()  # 翻转 W 维度
+            w = image.shape[2]  # 宽度
             for ann in annotations:
                 bbox = ann['bbox']
                 ann['bbox'] = [
-                    w - bbox[2],  # x1
-                    bbox[1],       # y1
-                    w - bbox[0],  # x2
-                    bbox[3],       # y2
+                    w - bbox[2],  # x1 = w - old_x2
+                    bbox[1],       # y1 不变
+                    w - bbox[0],  # x2 = w - old_x1
+                    bbox[3],       # y2 不变
                 ]
 
         return image, annotations
